@@ -9,7 +9,7 @@ import {
   ChevronLeft, 
   FileText 
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'expo-router';
 import { signOut } from '../lib/auth';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { ConnectionSettings } from '../components/settings/ConnectionSettings';
@@ -17,7 +17,7 @@ import { ConnectionSettings } from '../components/settings/ConnectionSettings';
 type SettingSection = 'main' | 'notifications' | 'privacy' | 'bluetooth' | 'appearance' | 'help' | 'legal';
 
 function Settings() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [activeSection, setActiveSection] = React.useState<SettingSection>('main');
 
   const settingsSections = [
@@ -62,7 +62,7 @@ function Settings() {
   const handleLogout = async () => {
     try {
       await signOut();
-      navigate('/'); // Redirect to home page after logout
+      router.push('/'); // Redirect to home page after logout
     } catch (error) {
       console.error('Error logging out:', error);
     }

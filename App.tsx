@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { View, ActivityIndicator, StyleSheet, SafeAreaView } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { supabase } from './src/lib/supabase';
-import type { Session } from '@supabase/supabase-js'; // Import the Session type
+import type { Session } from '@supabase/supabase-js';
 import { Auth } from './src/components/auth';
 import { Navbar } from './src/components/Navbar';
 import { TopNav } from './src/components/TopNav';
@@ -30,7 +31,52 @@ import Profile from './src/pages/Profile';
 import Hub from './src/pages/Hub';
 import Settings from './src/pages/Settings';
 
-const Stack = createStackNavigator();
+// Define a nested stack for your main screens
+const MainStack = createStackNavigator();
+
+function MainStackScreen() {
+  return (
+    <MainStack.Navigator screenOptions={{ headerShown: false }}>
+      <MainStack.Screen name="Home" component={Home} />
+      <MainStack.Screen name="FindUsers" component={FindUsers} />
+      <MainStack.Screen name="Upload" component={Upload} />
+      <MainStack.Screen name="Notifications" component={Notifications} />
+      <MainStack.Screen name="BadgeSelection" component={BadgeSelection} />
+      <MainStack.Screen name="BadgeInfo" component={BadgeInfo} />
+      <MainStack.Screen name="CreateJob" component={CreateJob} />
+      <MainStack.Screen name="HubProfile" component={HubProfile} />
+      <MainStack.Screen name="CreatorFund" component={CreatorFund} />
+      <MainStack.Screen name="ViewJobs" component={ViewJobs} />
+      <MainStack.Screen name="JobApplications" component={JobApplications} />
+      <MainStack.Screen name="JobDetails" component={JobDetails} />
+      <MainStack.Screen name="CreateSponsored" component={CreateSponsored} />
+      <MainStack.Screen name="ViewSponsored" component={ViewSponsored} />
+      <MainStack.Screen name="SponsoredDetails" component={SponsoredDetails} />
+      <MainStack.Screen name="Applications" component={Applications} />
+      <MainStack.Screen name="Ads" component={Ads} />
+      <MainStack.Screen name="Analytics" component={Analytics} />
+      <MainStack.Screen name="Profile" component={Profile} />
+      <MainStack.Screen name="Hub" component={Hub} />
+      <MainStack.Screen name="Settings" component={Settings} />
+    </MainStack.Navigator>
+  );
+}
+
+// Create a layout component that renders the TopNav, MainStack, and Navbar
+function MainLayout() {
+  return (
+    <SafeAreaView style={styles.container}>
+      <TopNav />
+      <View style={styles.mainContent}>
+        <MainStackScreen />
+      </View>
+      <Navbar />
+    </SafeAreaView>
+  );
+}
+
+// Create a RootStack so that MainLayout is rendered as a single screen with full navigation context
+const RootStack = createStackNavigator();
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -44,8 +90,8 @@ function App() {
       })
       .catch((err: any) => {
         console.error('Error getting session:', err);
-        setLoading(false);
         setSession(null);
+        setLoading(false);
       });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -59,9 +105,9 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-400"></div>
-      </div>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#06B6D4" />
+      </View>
     );
   }
 
@@ -71,33 +117,27 @@ function App() {
 
   return (
     <NavigationContainer>
-      <TopNav />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="FindUsers" component={FindUsers} />
-        <Stack.Screen name="Upload" component={Upload} />
-        <Stack.Screen name="Notifications" component={Notifications} />
-        <Stack.Screen name="BadgeSelection" component={BadgeSelection} />
-        <Stack.Screen name="BadgeInfo" component={BadgeInfo} />
-        <Stack.Screen name="CreateJob" component={CreateJob} />
-        <Stack.Screen name="HubProfile" component={HubProfile} />
-        <Stack.Screen name="CreatorFund" component={CreatorFund} />
-        <Stack.Screen name="ViewJobs" component={ViewJobs} />
-        <Stack.Screen name="JobApplications" component={JobApplications} />
-        <Stack.Screen name="JobDetails" component={JobDetails} />
-        <Stack.Screen name="CreateSponsored" component={CreateSponsored} />
-        <Stack.Screen name="ViewSponsored" component={ViewSponsored} />
-        <Stack.Screen name="SponsoredDetails" component={SponsoredDetails} />
-        <Stack.Screen name="Applications" component={Applications} />
-        <Stack.Screen name="Ads" component={Ads} />
-        <Stack.Screen name="Analytics" component={Analytics} />
-        <Stack.Screen name="Profile" component={Profile} />
-        <Stack.Screen name="Hub" component={Hub} />
-        <Stack.Screen name="Settings" component={Settings} />
-      </Stack.Navigator>
-      <Navbar />
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="MainLayout" component={MainLayout} />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  mainContent: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export default App;

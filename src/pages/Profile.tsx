@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { getCurrentProfile, updateProfile } from '../lib/auth';
 import { getProfileLinks, getProfileBrands, getProfileStats } from '../lib/friends';
@@ -44,8 +44,8 @@ interface Post {
 }
 
 function Profile() {
-  const { username } = useParams<{ username?: string }>();
-  const navigate = useNavigate();
+  const { username } = useLocalSearchParams<{ username?: string }>();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'vibes' | 'bangers' | 'links'>('vibes');
   const [loading, setLoading] = useState<boolean>(true);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -191,7 +191,7 @@ function Profile() {
       }
 
       if (!profileId) {
-        navigate('/');
+        router.push('/');
         return;
       }
 
@@ -517,7 +517,7 @@ function Profile() {
                 {connections.map((connection: Connection) => (
                   <Link
                     key={connection.id}
-                    to={`/profile/${connection.username}`}
+                    href={`/profile/${connection.username}`}
                     className="bg-gray-900 p-4 rounded-lg hover:bg-gray-800 transition-colors"
                   >
                     <div className="flex items-center space-x-3">

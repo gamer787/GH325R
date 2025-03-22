@@ -1,16 +1,18 @@
 import Constants from 'expo-constants';
 import { createClient } from '@supabase/supabase-js';
 
-const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = Constants.manifest.extra || {};
+// Load variables from app.json for Expo builds, fallback to .env for development
+const SUPABASE_URL = Constants.expoConfig?.extra?.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = Constants.expoConfig?.extra?.SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY) {
-  throw new Error('Missing Supabase environment variables');
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('❌ Missing Supabase environment variables. Please check your .env or app.json configuration.');
 }
 
-export const supabase = createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, {
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     autoRefreshToken: true,
-    // In React Native, there's no URL to detect sessions from.
     detectSessionInUrl: false,
+    persistSession: true
   },
 });

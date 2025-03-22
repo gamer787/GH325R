@@ -8,6 +8,7 @@ import {
   Image,
   ActivityIndicator,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -54,8 +55,7 @@ interface User {
   badge?: { role: string }[];
 }
 
-// If your BluetoothUser and LocationUser do not include properties like badge or display_name,
-// extend them with a partial User. (Adjust these definitions as needed.)
+// Extend BluetoothUser and LocationUser with additional optional properties.
 type ExtendedBluetoothUser = BluetoothUser & Partial<User>;
 type ExtendedLocationUser = LocationUser & Partial<User>;
 
@@ -86,7 +86,9 @@ export default function FindUsers(): React.JSX.Element {
   // Get the current user ID once on mount
   useEffect(() => {
     const getUserId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         setCurrentUserId(user.id);
       }
@@ -105,6 +107,7 @@ export default function FindUsers(): React.JSX.Element {
       nfcScanner.stopScanning();
       locationDiscovery.stopDiscovering();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startLocationDiscovery = async () => {
@@ -158,6 +161,11 @@ export default function FindUsers(): React.JSX.Element {
   };
 
   const startNfcScan = async () => {
+    // NFC scanning is not available on web.
+    if (Platform.OS === 'web') {
+      setError('NFC scanning is not available on web.');
+      return;
+    }
     try {
       setError(null);
       setIsNfcScanning(true);
@@ -243,7 +251,9 @@ export default function FindUsers(): React.JSX.Element {
       }
       try {
         setLoading(true);
-        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
         if (!currentUser) return;
         const { data: usersData, error: usersError } = await supabase
           .from('profiles')
@@ -322,7 +332,9 @@ export default function FindUsers(): React.JSX.Element {
             return { ...business, followers_count: count || 0 } as Business;
           })
         );
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (user) {
           const { data: followedData } = await supabase
             .from('follows')
@@ -359,7 +371,9 @@ export default function FindUsers(): React.JSX.Element {
         <View style={styles.card}>
           <View style={styles.rowBetween}>
             <Text style={styles.cardText}>
-              {isBluetoothScanning ? 'Scanning for nearby users...' : 'Start scanning to find users nearby'}
+              {isBluetoothScanning
+                ? 'Scanning for nearby users...'
+                : 'Start scanning to find users nearby'}
             </Text>
             {isBluetoothScanning && (
               <View style={styles.statusRow}>
@@ -375,8 +389,16 @@ export default function FindUsers(): React.JSX.Element {
               isBluetoothScanning ? styles.buttonInactive : styles.buttonActive,
             ]}
           >
-            {renderIcon(Bluetooth, { size: 20, color: isBluetoothScanning ? '#9CA3AF' : '#111827' })}
-            <Text style={[styles.buttonText, isBluetoothScanning ? styles.buttonTextInactive : styles.buttonTextActive]}>
+            {renderIcon(Bluetooth, {
+              size: 20,
+              color: isBluetoothScanning ? '#9CA3AF' : '#111827',
+            })}
+            <Text
+              style={[
+                styles.buttonText,
+                isBluetoothScanning ? styles.buttonTextInactive : styles.buttonTextActive,
+              ]}
+            >
               {isBluetoothScanning ? 'Stop Scanning' : 'Scan with Bluetooth'}
             </Text>
           </TouchableOpacity>
@@ -390,8 +412,16 @@ export default function FindUsers(): React.JSX.Element {
               isNfcScanning ? styles.buttonInactive : styles.buttonActive,
             ]}
           >
-            {renderIcon(Smartphone, { size: 20, color: isNfcScanning ? '#9CA3AF' : '#111827' })}
-            <Text style={[styles.buttonText, isNfcScanning ? styles.buttonTextInactive : styles.buttonTextActive]}>
+            {renderIcon(Smartphone, {
+              size: 20,
+              color: isNfcScanning ? '#9CA3AF' : '#111827',
+            })}
+            <Text
+              style={[
+                styles.buttonText,
+                isNfcScanning ? styles.buttonTextInactive : styles.buttonTextActive,
+              ]}
+            >
               {isNfcScanning ? 'Stop NFC' : 'Connect with NFC'}
             </Text>
           </TouchableOpacity>
@@ -424,7 +454,11 @@ export default function FindUsers(): React.JSX.Element {
                         style={styles.avatar}
                       />
                       <View style={styles.userInfo}>
-                        <TouchableOpacity onPress={() => navigation.navigate('Profile', { username: user.username })}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate('Profile', { username: user.username })
+                          }
+                        >
                           <Text style={styles.userName}>{user.display_name}</Text>
                         </TouchableOpacity>
                         <Text style={styles.userHandle}>@{user.username}</Text>
@@ -435,7 +469,10 @@ export default function FindUsers(): React.JSX.Element {
                           )}
                       </View>
                     </View>
-                    <TouchableOpacity onPress={() => handleConnect(user.id)} style={styles.connectButton}>
+                    <TouchableOpacity
+                      onPress={() => handleConnect(user.id)}
+                      style={styles.connectButton}
+                    >
                       <Text style={styles.connectButtonText}>Connect</Text>
                     </TouchableOpacity>
                   </View>
@@ -446,7 +483,9 @@ export default function FindUsers(): React.JSX.Element {
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No nearby users discovered</Text>
               <Text style={styles.emptySubText}>
-                {isBluetoothScanning ? 'Searching for people around you...' : 'Start scanning to find people around you'}
+                {isBluetoothScanning
+                  ? 'Searching for people around you...'
+                  : 'Start scanning to find people around you'}
               </Text>
             </View>
           )}
@@ -482,7 +521,11 @@ export default function FindUsers(): React.JSX.Element {
                         style={styles.avatar}
                       />
                       <View style={styles.userInfo}>
-                        <TouchableOpacity onPress={() => navigation.navigate('Profile', { username: user.username })}>
+                        <TouchableOpacity
+                          onPress={() =>
+                            navigation.navigate('Profile', { username: user.username })
+                          }
+                        >
                           <Text style={styles.userName}>{user.display_name}</Text>
                         </TouchableOpacity>
                         <Text style={styles.userHandle}>@{user.username}</Text>
@@ -496,7 +539,10 @@ export default function FindUsers(): React.JSX.Element {
                         </Text>
                       </View>
                     </View>
-                    <TouchableOpacity onPress={() => handleConnect(user.id)} style={styles.connectButton}>
+                    <TouchableOpacity
+                      onPress={() => handleConnect(user.id)}
+                      style={styles.connectButton}
+                    >
                       <Text style={styles.connectButtonText}>Connect</Text>
                     </TouchableOpacity>
                   </View>
@@ -529,8 +575,16 @@ export default function FindUsers(): React.JSX.Element {
                 searchType === 'users' && styles.searchToggleButtonActive,
               ]}
             >
-              {renderIcon(Users, { size: 20, color: searchType === 'users' ? '#111827' : '#9CA3AF' })}
-              <Text style={[styles.searchToggleText, searchType === 'users' && { color: '#111827' }]}>
+              {renderIcon(Users, {
+                size: 20,
+                color: searchType === 'users' ? '#111827' : '#9CA3AF',
+              })}
+              <Text
+                style={[
+                  styles.searchToggleText,
+                  searchType === 'users' && { color: '#111827' },
+                ]}
+              >
                 Find Users
               </Text>
             </TouchableOpacity>
@@ -546,20 +600,28 @@ export default function FindUsers(): React.JSX.Element {
                 searchType === 'businesses' && styles.searchToggleButtonActive,
               ]}
             >
-              {renderIcon(Building2, { size: 20, color: searchType === 'businesses' ? '#111827' : '#9CA3AF' })}
-              <Text style={[styles.searchToggleText, searchType === 'businesses' && { color: '#111827' }]}>
+              {renderIcon(Building2, {
+                size: 20,
+                color: searchType === 'businesses' ? '#111827' : '#9CA3AF',
+              })}
+              <Text
+                style={[
+                  styles.searchToggleText,
+                  searchType === 'businesses' && { color: '#111827' },
+                ]}
+              >
                 Find Businesses
               </Text>
             </TouchableOpacity>
           </View>
           <View style={styles.searchInputContainer}>
-            {renderIcon(Search, { size: 20, color: "#9CA3AF", style: { marginLeft: 8 } })}
+            {renderIcon(Search, { size: 20, color: '#9CA3AF', style: { marginLeft: 8 } })}
             <TextInput
               style={styles.searchInput}
               placeholder={
                 searchType === 'users'
-                  ? "Search users by name or username..."
-                  : "Search businesses by name, industry, or location..."
+                  ? 'Search users by name or username...'
+                  : 'Search businesses by name, industry, or location...'
               }
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
@@ -589,7 +651,11 @@ export default function FindUsers(): React.JSX.Element {
                           style={styles.avatar}
                         />
                         <View style={styles.userInfo}>
-                          <TouchableOpacity onPress={() => navigation.navigate('Profile', { username: user.username })}>
+                          <TouchableOpacity
+                            onPress={() =>
+                              navigation.navigate('Profile', { username: user.username })
+                            }
+                          >
                             <Text style={styles.userName}>{user.display_name}</Text>
                           </TouchableOpacity>
                           <Text style={styles.userHandle}>@{user.username}</Text>
@@ -600,7 +666,7 @@ export default function FindUsers(): React.JSX.Element {
                             )}
                           {user.location && (
                             <View style={styles.row}>
-                              {renderIcon(MapPin, { size: 16, color: "#9CA3AF" })}
+                              {renderIcon(MapPin, { size: 16, color: '#9CA3AF' })}
                               <Text style={styles.locationText}>{user.location}</Text>
                             </View>
                           )}
@@ -627,7 +693,10 @@ export default function FindUsers(): React.JSX.Element {
                           </Text>
                         </View>
                       ) : (
-                        <TouchableOpacity onPress={() => handleConnect(user.id)} style={styles.connectButton}>
+                        <TouchableOpacity
+                          onPress={() => handleConnect(user.id)}
+                          style={styles.connectButton}
+                        >
                           <Text style={styles.connectButtonText}>Connect</Text>
                         </TouchableOpacity>
                       )}
@@ -656,8 +725,14 @@ export default function FindUsers(): React.JSX.Element {
                           style={styles.avatar}
                         />
                         <View style={styles.userInfo}>
-                          <TouchableOpacity onPress={() => navigation.navigate('Profile', { username: business.username })}>
-                            <Text style={[styles.userName, { fontSize: 18 }]}>{business.display_name}</Text>
+                          <TouchableOpacity
+                            onPress={() =>
+                              navigation.navigate('Profile', { username: business.username })
+                            }
+                          >
+                            <Text style={[styles.userName, { fontSize: 18 }]}>
+                              {business.display_name}
+                            </Text>
                           </TouchableOpacity>
                           <Text style={styles.userHandle}>@{business.username}</Text>
                           {business.badge &&
@@ -667,19 +742,19 @@ export default function FindUsers(): React.JSX.Element {
                             )}
                           {business.industry && (
                             <View style={styles.row}>
-                              {renderIcon(Building2, { size: 16, color: "#9CA3AF" })}
+                              {renderIcon(Building2, { size: 16, color: '#9CA3AF' })}
                               <Text style={styles.locationText}>{business.industry}</Text>
                             </View>
                           )}
                           {business.location && (
                             <View style={styles.row}>
-                              {renderIcon(MapPin, { size: 16, color: "#9CA3AF" })}
+                              {renderIcon(MapPin, { size: 16, color: '#9CA3AF' })}
                               <Text style={styles.locationText}>{business.location}</Text>
                             </View>
                           )}
                           {business.website && (
                             <View style={styles.row}>
-                              {renderIcon(Globe, { size: 16, color: "#06B6D4" })}
+                              {renderIcon(Globe, { size: 16, color: '#06B6D4' })}
                               <Text style={[styles.locationText, { color: '#06B6D4' }]}>
                                 {business.website}
                               </Text>
@@ -687,7 +762,8 @@ export default function FindUsers(): React.JSX.Element {
                           )}
                           {business.bio && <Text style={styles.bioText}>{business.bio}</Text>}
                           <Text style={styles.followersText}>
-                            {business.followers_count} {business.followers_count === 1 ? 'follower' : 'followers'}
+                            {business.followers_count}{' '}
+                            {business.followers_count === 1 ? 'follower' : 'followers'}
                           </Text>
                         </View>
                       </View>
@@ -697,16 +773,20 @@ export default function FindUsers(): React.JSX.Element {
                             ? handleUnfollow(business.id)
                             : handleFollow(business.id)
                         }
-                        style={followedBusinesses.has(business.id) ? styles.unfollowButton : styles.followButton}
+                        style={
+                          followedBusinesses.has(business.id)
+                            ? styles.unfollowButton
+                            : styles.followButton
+                        }
                       >
                         {followedBusinesses.has(business.id) ? (
                           <>
-                            {renderIcon(UserMinus, { size: 20, color: "#9CA3AF" })}
+                            {renderIcon(UserMinus, { size: 20, color: '#9CA3AF' })}
                             <Text style={styles.unfollowButtonText}>Unfollow</Text>
                           </>
                         ) : (
                           <>
-                            {renderIcon(UserPlus, { size: 20, color: "#111827" })}
+                            {renderIcon(UserPlus, { size: 20, color: '#111827' })}
                             <Text style={styles.followButtonText}>Follow</Text>
                           </>
                         )}

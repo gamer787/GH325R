@@ -1,6 +1,31 @@
 import { supabase } from './supabase';
-import { BleManager } from 'react-native-ble-plx';
+import { Platform } from 'react-native';
 import { ResizeMode, Video } from 'expo-av';
+import { BleManager as RNBleManager } from 'react-native-ble-plx';
+
+// Use a dummy BleManager on web to avoid native module errors.
+const BleManager = Platform.OS === 'web'
+  ? class {
+      constructor() {}
+      async state(): Promise<string> {
+        // Always report Bluetooth as "PoweredOn" in the dummy.
+        return Promise.resolve('PoweredOn');
+      }
+      startDeviceScan(
+        _uuid: any,
+        _options: any,
+        callback: (error: Error | null, device: any) => void
+      ) {
+        // Simulate scanning by returning a dummy device after a short delay.
+        setTimeout(() => {
+          callback(null, { id: 'dummy-device', name: 'Dummy Device' });
+        }, 1000);
+      }
+      stopDeviceScan() {
+        // No-op for web.
+      }
+    }
+  : RNBleManager;
 
 export interface BluetoothUser {
   id: string;
@@ -22,7 +47,7 @@ class BluetoothScanner {
   private autoRetry: boolean = false;
   private backgroundMode: boolean = false;
   private deviceId: string | null = null;
-  private bleManager: BleManager;
+  private bleManager: any;
 
   constructor() {
     this.bleManager = new BleManager();
@@ -106,22 +131,19 @@ class BluetoothScanner {
 
   private async performScan() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Start scanning using BleManager for 5 seconds.
-      this.bleManager.startDeviceScan(
-        null,
-        null,
-        (error: Error | null, device: any) => {
-          if (error) {
-            if (this.onError) this.onError(error.message);
-            return;
-          }
-          // Optionally, process each discovered device here.
-          // (device is typed as any here; refine this if you add proper types.)
+      this.bleManager.startDeviceScan(null, null, (error: Error | null, device: any) => {
+        if (error) {
+          if (this.onError) this.onError(error.message);
+          return;
         }
-      );
+        // Optionally, process each discovered device here.
+      });
       setTimeout(() => {
         this.bleManager.stopDeviceScan();
       }, 5000);
@@ -173,10 +195,15 @@ class BluetoothScanner {
 
     const discoverUsers = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
-        const [{ data: nearbyUsers, error }, { data: friends }] = await Promise.all([
+        const [
+          { data: nearbyUsers, error },
+          { data: friends },
+        ] = await Promise.all([
           supabase
             .from('discovered_users')
             .select(`

@@ -27,6 +27,7 @@ async function initializePayment(options: {
       prefill: options.prefill,
       notes: options.notes,
     };
+    
 
     RazorpayCheckout.open(razorpayOptions)
       .then((data: RazorpayResponse) => {

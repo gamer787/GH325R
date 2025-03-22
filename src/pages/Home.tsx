@@ -11,9 +11,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Users } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import Vibes from '../components/home/Vibes';
-// Note: Use named import for Bangers because it has no default export.
 import { Bangers } from '../components/home/Bangers';
-// Ensure the casing matches the actual file name exactly.
 import CommentsModal from '../components/commentsModal';
 import DeletePostModal from '../components/DeletePostModal';
 import EndlessBangersModal from '../components/EndlessBangersModal';
@@ -26,12 +24,17 @@ interface PostsData {
   linkedBangers: any[];
 }
 
+// Define a type for the expected route parameters
+type HomeRouteParams = {
+  view?: string;
+};
+
 export default function Home() {
-  // Cast navigation as any to avoid route parameter type errors.
   const navigation = useNavigation<any>();
   const route = useRoute();
-  // Assume that a query parameter "view" is passed via route.params
-  const { view } = route.params as { view?: string };
+  // Cast route.params to HomeRouteParams and provide a fallback if undefined
+  const params = (route.params as HomeRouteParams) || {};
+  const view = params.view ?? 'default';
   const showBangers = view === 'bangers';
 
   const [posts, setPosts] = useState<PostsData>({
@@ -49,7 +52,7 @@ export default function Home() {
   const [showEndlessBangers, setShowEndlessBangers] = useState(false);
   const [lastClickTime, setLastClickTime] = useState(0);
 
-  // Example: load liked posts
+  // Load liked posts from the database
   const loadLikedPosts = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -65,20 +68,19 @@ export default function Home() {
     }
   };
 
-  // Example: load posts (implementation details omitted)
+  // Load posts from your backend (implementation details omitted)
   const loadPosts = async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Replace with your RPC call to load posts.
-      // For demo, we assume postsData is returned.
+      // Replace with your actual data fetching logic
       const postsData = {
         vibes: [], // load vibe posts
         bangers: [], // load banger posts
         linkedVibes: [],
-        linkedBangers: []
+        linkedBangers: [],
       };
       setPosts(postsData);
     } catch (err) {
@@ -88,7 +90,7 @@ export default function Home() {
     }
   };
 
-  // Example: handle like logic
+  // Handle liking a post
   const handleLike = async (postId: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -102,7 +104,7 @@ export default function Home() {
           .match({
             user_id: user.id,
             post_id: postId,
-            type: 'like'
+            type: 'like',
           });
         if (error) throw error;
         setLikedPosts(prev => {
@@ -117,7 +119,7 @@ export default function Home() {
           .insert({
             user_id: user.id,
             post_id: postId,
-            type: 'like'
+            type: 'like',
           });
         if (error) throw error;
         setLikedPosts(prev => new Set([...prev, postId]));
@@ -127,7 +129,7 @@ export default function Home() {
     }
   };
 
-  // Example: handle post deletion logic
+  // Handle post deletion
   const handleDeletePost = async () => {
     if (!postToDelete) return;
     try {
@@ -141,7 +143,7 @@ export default function Home() {
         ...prev,
         [postToDelete.type === 'vibe' ? 'vibes' : 'bangers']: prev[
           postToDelete.type === 'vibe' ? 'vibes' : 'bangers'
-        ].filter((post: any) => post.id !== postToDelete.id)
+        ].filter((post: any) => post.id !== postToDelete.id),
       }));
       setPostToDelete(null);
     } catch (err) {
@@ -151,7 +153,7 @@ export default function Home() {
 
   // Dummy function for updating comment count
   const updateCommentCount = (postId: string, increment: number) => {
-    // Update your posts state here
+    // Update your posts state here accordingly.
   };
 
   useEffect(() => {
@@ -168,9 +170,6 @@ export default function Home() {
     const timeDiff = currentTime - lastClickTime;
     if (timeDiff < 300) {
       setShowEndlessBangers(true);
-    } else {
-      // In native, you might navigate and pass params instead
-      // For demonstration, toggle showEndlessBangers false
     }
     setLastClickTime(currentTime);
   };
@@ -303,4 +302,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
 
